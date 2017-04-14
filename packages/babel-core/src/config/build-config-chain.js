@@ -47,27 +47,36 @@ class ConfigChainBuilder {
     if (!this.filename) return false;
 
     if (ignore && !Array.isArray(ignore)) {
-      throw new Error(`.ignore should be an array, ${JSON.stringify(ignore)} given`);
+      throw new Error(
+        `.ignore should be an array, ${JSON.stringify(ignore)} given`,
+      );
     }
 
     if (only && !Array.isArray(only)) {
-      throw new Error(`.only should be an array, ${JSON.stringify(only)} given`);
+      throw new Error(
+        `.only should be an array, ${JSON.stringify(only)} given`,
+      );
     }
 
-    return (ignore && this.matchesPatterns(ignore, dirname)) ||
-      (only && !this.matchesPatterns(only, dirname));
+    return (
+      (ignore && this.matchesPatterns(ignore, dirname)) ||
+      (only && !this.matchesPatterns(only, dirname))
+    );
   }
 
   /**
    * Returns result of calling function with filename if pattern is a function.
    * Otherwise returns result of matching pattern Regex with filename.
    */
-  matchesPatterns(patterns: Array<string | Function | RegExp>, dirname: string) {
+  matchesPatterns(
+    patterns: Array<string | Function | RegExp>,
+    dirname: string,
+  ) {
     const res = [];
     const strings = [];
     const fns = [];
 
-    patterns.forEach((pattern) => {
+    patterns.forEach(pattern => {
       const type = typeof pattern;
       if (type === "string") strings.push(pattern);
       else if (type === "function") fns.push(pattern);
@@ -92,17 +101,27 @@ class ConfigChainBuilder {
       }
     }
 
-    return res.some((re) => re.test(this.filename)) ||
-      fns.some((fn) => fn(this.filename)) ||
-      (strings.length > 0 && this.possibleDirs.some(micromatch.filter(strings.map((pattern) => {
-        // Preserve the "!" prefix so that micromatch can use it for negation.
-        const negate = pattern[0] === "!";
-        if (negate) pattern = pattern.slice(1);
+    return (
+      res.some(re => re.test(this.filename)) ||
+      fns.some(fn => fn(this.filename)) ||
+      (strings.length > 0 &&
+        this.possibleDirs.some(
+          micromatch.filter(
+            strings.map(
+              pattern => {
+                // Preserve the "!" prefix so that micromatch can use it for negation.
+                const negate = pattern[0] === "!";
+                if (negate) pattern = pattern.slice(1);
 
-        return (negate ? "!" : "") + path.resolve(dirname, pattern);
-      }, {
-        nocase: true,
-      }))));
+                return (negate ? "!" : "") + path.resolve(dirname, pattern);
+              },
+              {
+                nocase: true,
+              },
+            ),
+          ),
+        ))
+    );
   }
 
   findConfigs(loc: string) {
@@ -122,21 +141,19 @@ class ConfigChainBuilder {
     });
   }
 
-  mergeConfig({
-    type,
-    options,
-    alias,
-    loc,
-    dirname,
-  }) {
+  mergeConfig({ type, options, alias, loc, dirname }) {
     if (!options) {
       return false;
     }
 
     // Bail out ASAP if this file is ignored so that we run as little logic as possible on ignored files.
-    if (this.filename && this.shouldIgnore(options.ignore, options.only, dirname)) {
+    if (
+      this.filename && this.shouldIgnore(options.ignore, options.only, dirname)
+    ) {
       // TODO(logan): This is a really cross way to bail out. Avoid this in rewrite.
-      throw Object.assign(new Error("This file has been ignored."), { code: "BABEL_IGNORED_FILE" });
+      throw Object.assign(new Error("This file has been ignored."), {
+        code: "BABEL_IGNORED_FILE",
+      });
     }
 
     options = Object.assign({}, options);
@@ -169,7 +186,7 @@ class ConfigChainBuilder {
     if (options.extends) {
       const extendsConfig = loadConfig(options.extends, dirname);
 
-      const existingConfig = this.configs.some((config) => {
+      const existingConfig = this.configs.some(config => {
         return config.alias === extendsConfig.filepath;
       });
       if (!existingConfig) {
@@ -184,4 +201,3 @@ class ConfigChainBuilder {
     }
   }
 }
-
